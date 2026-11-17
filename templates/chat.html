@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Secure Chat{% endblock %}
+
+{% block content %}
+
+<div class="messenger-container">
+
+    <div class="messenger-header">
+        <h2>Secure Messenger</h2>
+        <p>Private conversations, protected with encryption.</p>
+    </div>
+
+    <div class="messenger-layout">
+
+        <!-- Users Sidebar -->
+        <div class="users-sidebar">
+            <h3>Contacts</h3>
+
+            {% for user in users %}
+                <div class="user-item">
+                    <div>
+                        <strong>{{ user.username }}</strong>
+                        <small>Online contact</small>
+                    </div>
+
+                    <button
+                        type="button"
+                        onclick="selectUser('{{ user.id }}', '{{ user.username }}')">
+                        Chat
+                    </button>
+                </div>
+            {% else %}
+                <p>No other users available.</p>
+            {% endfor %}
+        </div>
+
+        <!-- Chat Window -->
+        <div class="chat-window" id="chat-area" style="display: none;">
+
+            <div class="chat-header">
+                <h3 id="chat-heading">Conversation</h3>
+                <span>🔒 End-to-end encrypted</span>
+            </div>
+
+            <!-- Unlock Messages -->
+            <div class="unlock-section">
+
+                <h3>Unlock Your Messages</h3>
+
+                <label for="private-key-password">
+                    Enter your account password
+                </label>
+
+                <input
+                    type="password"
+                    id="private-key-password"
+                    placeholder="Enter your password"
+                >
+
+                <button type="button" onclick="unlockMyMessages()">
+                    Unlock Messages
+                </button>
+
+                <p id="unlock-status"></p>
+
+            </div>
+
+            <!-- Messages -->
+            <div id="messages">
+                <div id="inbox">
+                    Your messages will appear here.
+                </div>
+            </div>
+
+            <!-- Message Input -->
+            <div class="message-input-area">
+
+                <textarea
+                    id="message-input"
+                    placeholder="Type your encrypted message...">
+                </textarea>
+
+                <button type="button" onclick="sendMessage()">
+                    Send Message
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+    const CURRENT_USER_ID = {{ session.get('user_id') | tojson }};
+</script>
+
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+{% endblock %}

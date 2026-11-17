@@ -1,0 +1,155 @@
+
+{% extends 'base.html' %}
+
+{% block title %}Create Account{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <h2>Create Your Account</h2>
+    <p>Join Secure Messenger and protect your conversations.</p>
+
+    <form id="registerForm" method="POST">
+        <label>Username</label>
+        <input type="text" name="username" required minlength="3">
+
+        <label>Password</label>
+        <input type="password" id="password" name="password"
+               required minlength="10">
+
+        <label>Confirm Password</label>
+        <input type="password" id="confirmPassword" required>
+
+        <input type="hidden" name="public_key" id="publicKey">
+        <input type="hidden" name="encrypted_private_key"
+               id="encryptedPrivateKey">
+        <input type="hidden" name="salt" id="salt">
+        <input type="hidden" name="private_key_iv" id="privateKeyIv">
+
+        <button type="submit" id="registerButton">
+            Create Account
+        </button>
+
+        <p id="status"></p>
+    </form>
+
+    <p>Already registered?
+        <a href="{{ url_for('login') }}">Login here</a>
+    </p>
+</div>
+
+<script>
+const form = document.getElementById("registerForm");
+
+function toBase64(buffer) {
+    const bytes = new Uint8Array(buffer);
+    let binary = "";
+    bytes.forEach(byte => binary += String.fromCharCode(byte));
+    return btoa(binary);
+}
+
+form.addEventListener("submit", async function(event) {
+    event.preventDefault();
+
+    const password = document.getElementById("password").value;
+    const confirmPassword =
+        document.getElementById("confirmPassword").value;
+
+    const status = document.getElementById("status");
+    const button = document.getElementById("registerButton");
+
+    if (password !== confirmPassword) {
+        status.textContent = "Passwords do not match.";
+        return;
+    }
+
+    if (!window.crypto || !window.crypto.subtle) {
+        status.textContent = "Secure browser encryption is unavailable.";
+        return;
+    }
+
+    try {
+        button.disabled = true;
+        status.textContent = "Generating your encryption keys...";
+
+        // Generate RSA key pair in the browser
+        const keyPair = await crypto.subtle.generateKey(
+            {
+                name: "RSA-OAEP",
+                modulusLength: 2048,
+                publicExponent: new Uint8Array([1, 0, 1]),
+                hash: "SHA-256"
+            },
+            true,
+            ["encrypt", "decrypt"]
+        );
+
+        const publicKey = await crypto.subtle.exportKey(
+            "spki", keyPair.publicKey
+        );
+
+        const privateKey = await crypto.subtle.exportKey(
+            "pkcs8", keyPair.privateKey
+        );
+
+        // Generate random salt and IV
+        const salt = crypto.getRandomValues(new Uint8Array(16));
+        const iv = crypto.getRandomValues(new Uint8Array(12));
+
+        // Derive a key from the user's password
+        const passwordMaterial = await crypto.subtle.importKey(
+            "raw",
+            new TextEncoder().encode(password),
+            "PBKDF2",
+            false,
+            ["deriveKey"]
+        );
+
+        const protectionKey = await crypto.subtle.deriveKey(
+            {
+                name: "PBKDF2",
+                salt: salt,
+                iterations: 600000,
+                hash: "SHA-256"
+            },
+            passwordMaterial,
+            {
+                name: "AES-GCM",
+                length: 256
+            },
+            false,
+            ["encrypt"]
+        );
+
+        // Encrypt private key before sending it to Flask
+        const encryptedPrivateKey = await crypto.subtle.encrypt(
+            {
+                name: "AES-GCM",
+                iv: iv
+            },
+            protectionKey,
+            privateKey
+        );
+
+        // Fill hidden form fields
+        document.getElementById("publicKey").value =
+            toBase64(publicKey);
+
+        document.getElementById("encryptedPrivateKey").value =
+            toBase64(encryptedPrivateKey);
+
+        document.getElementById("salt").value = toBase64(salt);
+
+        document.getElementById("privateKeyIv").value = toBase64(iv);
+
+        status.textContent = "Registering your account...";
+
+        form.submit();
+
+    } catch (error) {
+        console.error(error);
+        status.textContent = "Registration failed. Please try again.";
+        button.disabled = false;
+    }
+});
+</script>
+{% endblock %}

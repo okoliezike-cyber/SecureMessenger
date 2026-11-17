@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Secure Messenger{% endblock %}
+
+{% block content %}
+
+\<div class="dashboard-container">     \<h1>Welcome, {{ session.get('username') }}!\</h1>
+
+```
+<p>Your Secure Messenger account is ready.</p>
+
+<div class="dashboard-card">
+    <h3>Secure Messaging</h3>
+
+    <p>Send and receive encrypted messages privately.</p>
+
+    <a href="{{ url_for('chat') }}" class="btn">
+        Open Secure Chat
+    </a>
+</div>
+```
+
+\</div> {% endblock %}
