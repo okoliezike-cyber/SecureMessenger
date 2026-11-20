@@ -85,6 +85,57 @@
                     Send Message
                 </button>
 
+            <!-- Encryption and Decryption Demonstration -->
+            <div class="crypto-demo">
+
+                <h3>🔐 Encryption & Decryption Demonstration</h3>
+
+                <div class="crypto-card">
+                    <h4>1. Encryption Process</h4>
+
+                    <label>Original Message</label>
+                    <textarea id="demo-original" readonly
+                        placeholder="Your original message will appear here."></textarea>
+
+                    <label>Encrypted Message (Ciphertext)</label>
+                    <textarea id="demo-encrypted" readonly
+                        placeholder="Encrypted message will appear here."></textarea>
+
+                    <label>Encryption Algorithm</label>
+                    <input type="text" id="demo-algorithm"
+                        value="AES-256-GCM" readonly>
+
+                    <label>Encryption Key (Educational Display)</label>
+                    <textarea id="demo-encryption-key" readonly
+                        placeholder="Generated AES key will appear here."></textarea>
+
+                        <label>Encryption Nonce (IV)</label>
+<textarea id="demo-encryption-nonce" readonly
+    placeholder="Encryption nonce will appear here."></textarea>
+                </div>
+
+                <div class="crypto-card">
+                    <h4>2. Decryption Process</h4>
+
+                    <label>Encrypted Message</label>
+                    <textarea id="demo-decrypt-input" readonly
+                        placeholder="Ciphertext will appear here."></textarea>
+
+                    <label>Recovered AES Key</label>
+                    <textarea id="demo-decryption-key" readonly
+                        placeholder="Recovered key will appear here."></textarea>
+
+                    <label>Decryption Result</label>
+                    <textarea id="demo-decrypted" readonly
+                        placeholder="Decrypted message will appear here."></textarea>
+
+                    <p id="demo-decryption-status">
+                        Waiting for a message to be decrypted.
+                    </p>
+                </div>
+
+            </div>
+
             </div>
 
         </div>

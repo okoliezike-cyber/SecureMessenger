@@ -159,7 +159,7 @@ async function decryptMessageKey(encryptedKey, privateKey) {
         {
             name: "AES-GCM"
         },
-        false,
+        true,
         ["decrypt"]
     );
 }
@@ -188,17 +188,34 @@ async function sendMessage() {
         return;
     }
 
-    if (!unlockedPrivateKey) {
-        alert("Unlock your messages before sending.");
-        return;
-    }
-
     try {
         // Generate a temporary AES key
         const messageKey = await generateMessageKey();
 
         // Encrypt the message
         const encrypted = await encryptMessage(message, messageKey);
+        
+        // Display live encryption demonstration
+document.getElementById("demo-original").value = message;
+
+document.getElementById("demo-encrypted").value =
+    encrypted.encrypted_message;
+
+document.getElementById("demo-algorithm").value =
+    "AES-256-GCM";
+
+// Export the actual AES key for educational display
+const rawMessageKey = await crypto.subtle.exportKey(
+    "raw",
+    messageKey
+);
+
+document.getElementById("demo-encryption-key").value =
+    toBase64(new Uint8Array(rawMessageKey));
+
+// Display the nonce (IV)
+document.getElementById("demo-encryption-nonce").value =
+    encrypted.nonce;
 
         // Get recipient's public key
         const response = await fetch(`/public-key/${receiverId}`);
@@ -315,18 +332,43 @@ async function loadMessages() {
                 content.textContent = "Unlock your messages to read.";
             } else {
                 try {
-                    const messageKey = await decryptMessageKey(
-                        message.receiver_encrypted_key,
-                        unlockedPrivateKey
-                    );
+                    // Select the correct encrypted AES key
+const encryptedKey = message.is_sent
+    ? message.sender_encrypted_key
+    : message.receiver_encrypted_key;
 
-                    const plaintext = await decryptMessage(
-                        message.encrypted_message,
-                        message.nonce,
-                        messageKey
-                    );
+// Recover the AES key using the user's private key
+const messageKey = await decryptMessageKey(
+    encryptedKey,
+    unlockedPrivateKey
+);
 
-                    content.textContent = plaintext;
+// Decrypt the actual message
+const plaintext = await decryptMessage(
+    message.encrypted_message,
+    message.nonce,
+    messageKey
+);
+
+content.textContent = plaintext;
+
+// Display decryption demonstration
+const recoveredKey = await crypto.subtle.exportKey(
+    "raw",
+    messageKey
+);
+
+document.getElementById("demo-decrypt-input").value =
+    message.encrypted_message;
+
+document.getElementById("demo-decryption-key").value =
+    toBase64(new Uint8Array(recoveredKey));
+
+document.getElementById("demo-decrypted").value =
+    plaintext;
+
+document.getElementById("demo-decryption-status").textContent =
+    "Decryption successful! AES-256-GCM";
 
                 } catch (error) {
                     content.textContent = "Unable to decrypt this message.";
